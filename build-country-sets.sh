@@ -25,15 +25,15 @@ function check_progs() {
 # CSV URL: http://geolite.maxmind.com/download/geoip/database/GeoLite2-Country-CSV.zip
 # MD5 URL: http://geolite.maxmind.com/download/geoip/database/GeoLite2-Country-CSV.zip.md5
 function download_geolite2_data() {
-  local BASE_URL="http://geolite.maxmind.com/download/geoip/database/"
+  [ -z "${LICENSE_KEY}" ] && error "LICENSE_KEY environment variable is missing"
   local ZIPPED_FILE="GeoLite2-Country-CSV.zip"
   local MD5_FILE="${ZIPPED_FILE}.md5"
-  local CSV_URL="${BASE_URL}${ZIPPED_FILE}"
-  local MD5_URL="${BASE_URL}${MD5_FILE}"
+  local CSV_URL="https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-Country-CSV&license_key=${LICENSE_KEY}&suffix=zip"
+  local MD5_URL="https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-Country-CSV&license_key=${LICENSE_KEY}&suffix=zip.md5"
 
   # download files
-  curl --silent --location --remote-name $CSV_URL || error "Failed to download: $CSV_URL"
-  curl --silent --location --remote-name $MD5_URL || error "Failed to download: $MD5_URL"
+  curl --silent --location "${CSV_URL}" --output "${ZIPPED_FILE}" || error "Failed to download: ${CSV_URL}"
+  curl --silent --location "${MD5_URL}" --output "${MD5_FILE}" || error "Failed to download: ${MD5_URL}"
 
   # validate checksum
   # .md5 file is not in expected format so 'md5sum --check $MD5_FILE' doesn't work
@@ -195,6 +195,7 @@ function build_ipv6_sets {
 function main() {
   # setup
   check_progs
+  [ -f '/etc/geoip.conf' ] && source '/etc/geoip.conf'
   export TEMPDIR=$(mktemp --directory)
   # place geolite data in temporary directory
   pushd $TEMPDIR > /dev/null 2>&1
